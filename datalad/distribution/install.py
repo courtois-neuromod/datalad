@@ -187,8 +187,7 @@ class Install(Interface):
             on the installed dataset. Use
             [PY: `run_procedure(discover=True)` PY][CMD: run-procedure --discover CMD]
             to get a list of available procedures, such as cfg_text2git.
-            """
-        ),
+            """),
         description=location_description,
         recursive=recursion_flag,
         recursion_limit=recursion_limit,
@@ -235,6 +234,7 @@ class Install(Interface):
             # annex_opts=annex_opts,
             reckless=reckless,
             jobs=jobs,
+            cfg_proc=cfg_proc,
         )
 
         # did we explicitly get a dataset to install into?
@@ -405,7 +405,8 @@ class Install(Interface):
             return_type='generator',
             result_renderer='disabled',
             result_filter=None,
-            on_failure='ignore')
+            on_failure='ignore',
+            cfg_proc=cfg_proc,)
         # helper
         as_ds = YieldDatasets()
         destination_dataset = None
@@ -439,14 +440,6 @@ class Install(Interface):
                 r['refds'] = refds_path
                 yield r
 
-        # run procedures once subdatasets are also installed.
-        cfg_proc_specs = _procedures_exists(destination_dataset, cfg_proc) if cfg_proc else []
-        for cfg_proc_spec in cfg_proc_specs:
-            yield from destination_dataset.run_procedure(
-                cfg_proc_spec,
-                result_renderer='disabled',
-                return_type='generator',
-            )
         # at this point no further post-processing should be necessary,
         # `clone` and `get` must have done that (incl. parent handling)
         # if not, bugs should be fixed in those commands
