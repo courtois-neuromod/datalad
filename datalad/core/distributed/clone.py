@@ -25,7 +25,7 @@ from datalad.distribution.dataset import (
 from datalad.interface.base import (
     Interface,
     build_doc,
-    eval_results
+    eval_results,
 )
 from datalad.interface.common_opts import (
     location_description,
@@ -45,12 +45,12 @@ from datalad.support.network import (
 )
 from datalad.support.param import Parameter
 from datalad.utils import (
-    knows_annex,
     PurePath,
+    knows_annex,
     rmtree,
 )
 
-from .clone_utils import (  # needed because other code imports it from here
+from .clone_utils import (  # needed because other code imports it from here; RIA imports needed b/c datalad-next imports it from here ATM;; Remove after core was released and next dropped the ria patch.
     _check_autoenable_special_remotes,
     _format_clone_errors,
     _generate_candidate_clone_sources,
@@ -60,13 +60,9 @@ from .clone_utils import (  # needed because other code imports it from here
     _test_existing_clone_target,
     _try_clone_candidates,
     decode_source_spec,
-    # RIA imports needed b/c datalad-next imports it from here ATM;
-    # Remove after core was released and next dropped the ria patch.
     postclone_preannex_cfg_ria,
     postclonecfg_ria,
 )
-
-from datalad.core.local.create import _procedures_exists
 
 __docformat__ = 'restructuredtext'
 
@@ -551,7 +547,8 @@ def clone_dataset(
         rmtree(destds.path, children_only=dest_path_existed)
         return
 
-    cfg_proc_specs = _procedures_exists(destds, cfg_proc) if cfg_proc else []
+    from datalad.local.run_procedure import _get_proc_configs
+    cfg_proc_specs = _get_proc_configs(cfg_proc, destds) if cfg_proc else []
     for cfg_proc_spec in cfg_proc_specs:
         yield from destds.run_procedure(
             cfg_proc_spec,
