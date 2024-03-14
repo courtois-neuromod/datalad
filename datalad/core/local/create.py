@@ -37,7 +37,6 @@ from datalad.interface.base import (
     eval_results,
 )
 from datalad.interface.common_opts import location_description
-from datalad.local.run_procedure import _get_proc_configs
 from datalad.support.annexrepo import AnnexRepo
 from datalad.support.constraints import (
     EnsureKeyChoice,
@@ -337,6 +336,7 @@ class Create(Interface):
             yield res
             return
 
+        from datalad.local.run_procedure import _get_proc_configs
         cfg_proc_specs = _get_proc_configs(cfg_proc, tbds) if cfg_proc else []
 
         if initopts is not None and isinstance(initopts, list):
@@ -549,3 +549,24 @@ def _setup_annex_repo(path, initopts=None, fake_dates=False,
             'type': 'file',
             'state': 'untracked'}
     return tbrepo, add_to_git
+
+def _procedures_exists(ds, cfg_proc):
+    # Check if specified cfg_proc(s) can be discovered, storing
+    # the results so they can be used when the time comes to run
+    # the procedure. If a procedure cannot be found, raise an
+    # error to prevent creating the dataset.
+    cfg_proc_specs = []
+    discovered_procs = ds.run_procedure(
+        discover=True,
+        result_renderer='disabled',
+        return_type='list',
+    )
+    for cfg_proc_ in cfg_proc:
+        for discovered_proc in discovered_procs:
+            if discovered_proc['procedure_name'] == 'cfg_' + cfg_proc_:
+                cfg_proc_specs.append(discovered_proc)
+                break
+        else:
+            raise ValueError("Cannot find procedure with name "
+                             "'%s'" % cfg_proc_)
+    return cfg_proc_specs
