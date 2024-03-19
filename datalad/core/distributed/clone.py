@@ -64,8 +64,6 @@ from .clone_utils import (  # needed because other code imports it from here; RI
     postclonecfg_ria,
 )
 
-from datalad.core.local.create import _procedures_exists
-
 __docformat__ = 'restructuredtext'
 
 lgr = logging.getLogger('datalad.core.distributed.clone')
