@@ -11,6 +11,7 @@
 
 import logging
 import re
+import sys
 import traceback
 from os import linesep
 from pathlib import Path
@@ -91,7 +92,10 @@ class CapturedException(object):
         -------
         str
         """
-        return self.name + '(' + self.message + ')'
+        s = self.name + '(' + self.message + ')'
+        if exc_cause := getattr(self.tb, '__cause__', None):
+            s += f' -caused by- {format_exception_with_cause(exc_cause)}'
+        return s
 
     def format_with_cause(self):
         """Returns a representation of the original exception including the
@@ -109,15 +113,26 @@ class CapturedException(object):
         """
         return str(self.tb)
 
-    @property
-    def name(self):
-        """Returns the class name of the original exception
+    if sys.version_info < (3, 13):
+        @property
+        def name(self):
+            """Returns the class name of the original exception
 
-        Returns
-        -------
-        str
-        """
-        return self.tb.exc_type.__qualname__
+            Returns
+            -------
+            str
+            """
+            return self.tb.exc_type.__qualname__
+    else:
+        @property
+        def name(self):
+            """Returns the class name of the original exception
+
+            Returns
+            -------
+            str
+            """
+            return self.tb.exc_type_str
 
     def __str__(self):
         return self.format_short()
@@ -153,13 +168,6 @@ def format_oneline_tb(exc, tb=None, limit=None, include_str=True):
     # startup.
     from datalad import cfg
 
-    if include_str:
-        # try exc message else exception type
-        leading = exc.message or exc.name
-        out = "{} ".format(leading)
-    else:
-        out = ""
-
     if tb is None:
         tb = traceback.TracebackException.from_exception(
             exc,
@@ -167,6 +175,15 @@ def format_oneline_tb(exc, tb=None, limit=None, include_str=True):
             lookup_lines=True,
             capture_locals=False,
         )
+
+    if include_str:
+        # try exc message else exception type
+        leading = exc.message or exc.name
+        out = "{} ".format(leading)
+        if exc_cause := getattr(tb, '__cause__', None):
+            out += f'-caused by- {format_exception_with_cause(exc_cause)} '
+    else:
+        out = ""
 
     entries = []
     entries.extend(tb.stack)
@@ -205,7 +222,8 @@ def format_exception_with_cause(e):
     messages.
     """
     s = str(e) or \
-        (e.exc_type.__name__ if isinstance(e, traceback.TracebackException)
+        ((e.exc_type.__name__ if sys.version_info < (3, 13) else e.exc_type_str)
+         if isinstance(e, traceback.TracebackException)
          else e.__class__.__name__)
     exc_cause = getattr(e, '__cause__', None)
     if exc_cause:

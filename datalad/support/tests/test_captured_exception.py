@@ -1,3 +1,4 @@
+import sys
 from unittest.mock import patch
 
 from datalad import cfg
@@ -59,10 +60,10 @@ def test_CapturedException():
 
     estr_full = captured_exc.format_oneline_tb(10)
 
-    assert_re_in(r"new message \[test_captured_exception.py:test_CapturedException:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr_full)
-    assert_re_in(r"new message \[test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr3)
-    assert_re_in(r"new message \[test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr2)
-    assert_re_in(r"new message \[test_captured_exception.py:f2:[0-9]+\]", estr1)
+    assert_re_in(r"new message -caused by- my bad again \[test_captured_exception.py:test_CapturedException:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr_full)
+    assert_re_in(r"new message -caused by- my bad again \[test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr3)
+    assert_re_in(r"new message -caused by- my bad again \[test_captured_exception.py:f:[0-9]+,test_captured_exception.py:f2:[0-9]+\]", estr2)
+    assert_re_in(r"new message -caused by- my bad again \[test_captured_exception.py:f2:[0-9]+\]", estr1)
     # default: no limit:
     assert_equal(estr_, estr_full)
 
@@ -72,15 +73,16 @@ def test_CapturedException():
     assert_equal(full_display[0], "Traceback (most recent call last):")
     # points in f and f2 for first exception with two lines each
     # (where is the line and what reads the line):
-    assert_true(full_display[1].lstrip().startswith("File"))
-    assert_equal(full_display[2].strip(), "f2()")
-    assert_true(full_display[3].lstrip().startswith("File"))
-    assert_equal(full_display[4].strip(), "raise Exception(\"my bad again\")")
-    assert_equal(full_display[5].strip(), "Exception: my bad again")
-    assert_equal(full_display[7].strip(), "The above exception was the direct cause of the following exception:")
-    assert_equal(full_display[9], "Traceback (most recent call last):")
+    assert full_display[1].lstrip().startswith("File")
+    assert full_display[2].strip() == "f2()"
+    inc = int(sys.version_info >= (3, 13))
+    assert full_display[3 + inc].lstrip().startswith("File")
+    assert full_display[4 + inc].strip() == "raise Exception(\"my bad again\")"
+    assert full_display[5 + inc].strip() == "Exception: my bad again"
+    assert full_display[7 + inc].strip() == "The above exception was the direct cause of the following exception:"
+    assert full_display[9 + inc] == "Traceback (most recent call last):"
     # ...
-    assert_equal(full_display[-1].strip(), "RuntimeError: new message")
+    assert full_display[-1].strip() == "RuntimeError: new message"
 
     # CapturedException.__repr__:
     assert_re_in(r".*test_captured_exception.py:f2:[0-9]+\]$",
