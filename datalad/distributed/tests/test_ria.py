@@ -48,10 +48,10 @@ def test_ephemeral(ds_path=None, store_path=None, clone_path=None):
                       reckless="ephemeral")
 
     # ephemeral clone was properly linked (store has bare repos!):
-    clone_annex = (eph_clone.repo.dot_git / 'annex')
+    clone_annex = (eph_clone.repo.dot_git / 'annex' / 'objects')
     assert_true(clone_annex.is_symlink())
     assert_true(clone_annex.resolve().samefile(
-        store / ds.id[:3] / ds.id[3:] / 'annex'))
+        store / ds.id[:3] / ds.id[3:] / 'annex' / 'objects'))
     if not eph_clone.repo.is_managed_branch():
         # TODO: We can't properly handle adjusted branch yet
         # we don't need to get files in order to access them:

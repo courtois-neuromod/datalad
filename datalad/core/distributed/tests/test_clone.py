@@ -1385,9 +1385,9 @@ def test_ephemeral(origin_path=None, bare_path=None,
         # common checks to do on a clone
         eq_(clone_.config.get("annex.private"), "true")
         if can_symlink:
-            clone_annex = (clone_.repo.dot_git / 'annex')
+            clone_annex = (clone_.repo.dot_git / 'annex' / 'objects')
             ok_(clone_annex.is_symlink())
-            ok_(clone_annex.resolve().samefile(origin.repo.dot_git / 'annex'))
+            ok_(clone_annex.resolve().samefile(origin.repo.dot_git / 'annex' / 'objects'))
             if not clone_.repo.is_managed_branch():
                 # TODO: We can't properly handle adjusted branch yet
                 eq_((clone_.pathobj / file_test).read_text(), 'some')
@@ -1441,6 +1441,8 @@ def test_ephemeral(origin_path=None, bare_path=None,
     runner = GitWitlessRunner()
     runner.run(['git', 'clone', '--bare', origin_path, bare_path])
     runner.run(['git', 'annex', 'init'], cwd=bare_path)
+    bare_objects_dir = Path(bare_path) / 'annex' / 'objects'
+    bare_objects_dir.mkdir(exist_ok=True)
 
     eph_from_bare = clone(bare_path, clone3_path, reckless='ephemeral')
 
@@ -1451,9 +1453,9 @@ def test_ephemeral(origin_path=None, bare_path=None,
         # option alone. We should have such a setup in the RIA tests and test
         # for data access there.
         # Here we only test for the correct linking.
-        eph_annex = eph_from_bare.repo.dot_git / 'annex'
+        eph_annex = eph_from_bare.repo.dot_git / 'annex' / 'objects'
         ok_(eph_annex.is_symlink())
-        ok_(eph_annex.resolve().samefile(Path(bare_path) / 'annex'))
+        ok_(eph_annex.resolve().samefile(Path(bare_path) / 'annex' / 'objects'))
 
     # 5. ephemeral clone using relative path
     # https://github.com/datalad/datalad/issues/7469

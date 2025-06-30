@@ -83,7 +83,7 @@ def _setup_ephemeral_annex(ds: Dataset, remote: str):
     if check_symlink_capability(ds.repo.dot_git / 'dl_link_test',
                                 ds.repo.dot_git / 'dl_target_test'):
         # symlink the annex to avoid needless copies in an ephemeral clone
-        annex_dir = ds.repo.dot_git / 'annex'
+        annex_objects_dir = ds.repo.dot_git / 'annex' / 'objects'
         origin_annex_url = ds.config.get(f"remote.{remote}.url", None)
         origin_git_path = None
         if origin_annex_url:
@@ -117,10 +117,11 @@ def _setup_ephemeral_annex(ds: Dataset, remote: str):
                             remote, origin_annex_url)
         if origin_git_path:
             # TODO make sure that we do not delete any unique data
-            rmtree(str(annex_dir)) \
-                if not annex_dir.is_symlink() else annex_dir.unlink()
-            annex_dir.symlink_to(origin_git_path / 'annex',
-                                 target_is_directory=True)
+            if annex_objects_dir.exists():
+                rmtree(str(annex_objects_dir)) \
+                    if not annex_objects_dir.is_symlink() else annex_objects_dir.unlink()
+            annex_objects_dir.symlink_to(origin_git_path / 'annex' / 'objects',
+                                        target_is_directory=True)
     else:
         # TODO: What level? + note, that annex-dead is independent
         lgr.warning("reckless=ephemeral mode: Unable to create symlinks on "
