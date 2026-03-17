@@ -182,6 +182,7 @@ jobs:
 
       - name: Run tests
         run: |
+          export TMPDIR=/dev/shm
           PYTEST_OPTS=( -v )
           # If we requested to run only not slow (typically <10sec) tests, fail
           # if a test takes 3x more than that - it needs to get @slow or
